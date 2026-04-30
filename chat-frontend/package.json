@@ -14,8 +14,8 @@
     "test": "jest",
     "format": "prettier -w .",
     "format:check": "prettier -c .",
-    "postbuild": "next-sitemap --config next-sitemap.config.js",
-    "prepare": "husky install"
+    "prepare": "cd .. && husky install chat-frontend/.husky || true",
+    "postbuild": "next-sitemap --config next-sitemap.config.js"
   },
   "dependencies": {
     "clsx": "^2.0.0",
@@ -58,11 +58,11 @@
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
-      "eslint --max-warnings=0",
-      "prettier -w"
+      "npm run lint",
+      "npm run format"
     ],
     "**/*.{json,css,scss,md,webmanifest}": [
-      "prettier -w"
+      "npm run format"
     ]
   }
 }

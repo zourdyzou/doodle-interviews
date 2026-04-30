@@ -28,7 +28,6 @@ Before running this project, make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) >= 22
 - [npm](https://www.npmjs.com/) >= 10
-- [pnpm](https://pnpm.io/) >= 9
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [WSL2](https://learn.microsoft.com/en-us/windows/wsl/) (Windows only)
 
@@ -54,6 +53,8 @@ cd doodle-interviews
 ```bash
 npm run install:all
 ```
+
+This installs dependencies for both `chat-api` and `chat-frontend`.
 
 ### 3. Set up environment variables
 
@@ -164,19 +165,18 @@ A Next.js 15 frontend with Tailwind CSS, written in TypeScript.
 - **Framework**: Next.js 15
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS 4
-- **Package Manager**: pnpm
+- **Package Manager**: npm
 - **Testing**: Jest + Testing Library
 - **Linting**: ESLint + Prettier
-- **Validation**: Zod
 
 ### Running the Frontend
 
 ```bash
 cd chat-frontend
-pnpm install
-pnpm dev        # runs on port 5000
-pnpm build      # production build
-pnpm start      # start production server
+npm install
+npm run dev     # runs on port 5000
+npm run build   # production build
+npm start       # start production server
 ```
 
 ### Frontend Scripts
@@ -259,6 +259,39 @@ MONGODB_URI=mongodb://localhost:27017/doodle-chat
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+---
+
+## Commit Convention
+
+This project follows [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+type(scope): subject
+```
+
+| Type | Description |
+|---|---|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation changes |
+| `style` | Formatting changes |
+| `refactor` | Code restructure |
+| `perf` | Performance improvement |
+| `test` | Adding or fixing tests |
+| `build` | Build system or dependencies |
+| `ci` | CI/CD configuration |
+| `chore` | Maintenance tasks |
+| `revert` | Revert a previous commit |
+
+### Examples
+
+```bash
+feat(frontend): add chat message component
+fix(api): handle null response from MongoDB
+docs(readme): update setup instructions
+chore: update .gitignore
 ```
 
 ---

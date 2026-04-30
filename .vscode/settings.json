@@ -1,0 +1,8 @@
+{
+  "js/ts.tsdk.path": "chat-frontend/node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "eslint.workingDirectories": [
+    "./chat-frontend",
+    "./chat-api"
+  ]
+}
