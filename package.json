@@ -1,0 +1,55 @@
+{
+  "name": "doodle-frontend-challenge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Doodle frontend challenge — monorepo containing chat API and frontend",
+  "keywords": [
+    "doodle",
+    "chat",
+    "frontend-challenge",
+    "monorepo"
+  ],
+  "author": {
+    "name": "Doodle AG",
+    "url": "https://doodle.com"
+  },
+  "license": "PROPRIETARY",
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "dev": "concurrently --kill-others --names \"API,FRONTEND\" --prefix-colors \"blue,green\" \"npm run dev:api\" \"npm run dev:frontend\"",
+    "dev:api": "cd chat-api && docker compose up -d && npm run dev",
+    "dev:frontend": "cd chat-frontend && pnpm install && pnpm dev",
+    "build": "npm run build:api && npm run build:frontend",
+    "build:api": "cd chat-api && npm run build",
+    "build:frontend": "cd chat-frontend && pnpm build",
+    "start": "concurrently --kill-others --names \"API,FRONTEND\" --prefix-colors \"blue,green\" \"npm run start:api\" \"npm run start:frontend\"",
+    "start:api": "cd chat-api && npm run start:prod",
+    "start:frontend": "cd chat-frontend && pnpm start",
+    "install:all": "cd chat-api && npm install && cd ../chat-frontend && pnpm install",
+    "lint": "npm run lint:api && npm run lint:frontend",
+    "lint:api": "cd chat-api && npm run lint",
+    "lint:frontend": "cd chat-frontend && pnpm lint",
+    "lint:fix": "npm run lint:fix:api && npm run lint:fix:frontend",
+    "lint:fix:api": "cd chat-api && npm run lint:fix",
+    "lint:fix:frontend": "cd chat-frontend && pnpm lint:fix",
+    "format": "npm run format:api && npm run format:frontend",
+    "format:api": "cd chat-api && npm run prettier",
+    "format:frontend": "cd chat-frontend && pnpm format",
+    "test": "npm run test:api && npm run test:frontend",
+    "test:api": "cd chat-api && npm run test",
+    "test:frontend": "cd chat-frontend && pnpm test",
+    "docker:up": "cd chat-api && docker compose up -d",
+    "docker:down": "cd chat-api && docker compose down",
+    "docker:clean": "cd chat-api && docker compose down -v",
+    "clean": "npm run clean:api && npm run clean:frontend",
+    "clean:api": "cd chat-api && npm run clean",
+    "clean:frontend": "cd chat-frontend && rm -rf node_modules .next"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
