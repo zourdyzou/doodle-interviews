@@ -50,6 +50,8 @@
     "clean:frontend": "cd chat-frontend && rm -rf node_modules .next"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
     "concurrently": "^8.2.2"
   }
 }

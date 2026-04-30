@@ -52,17 +52,17 @@
     "next-sitemap": "^2.5.28",
     "postcss": "^8.5.1",
     "prettier": "^2.8.8",
-    "prettier-plugin-tailwindcss": "^0.6.14",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
-      "npm run lint",
-      "npm run format"
+      "eslint --max-warnings=0",
+      "prettier -w"
     ],
     "**/*.{json,css,scss,md,webmanifest}": [
-      "npm run format"
+      "prettier -w"
     ]
   }
 }
