@@ -52,6 +52,20 @@
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "lint-staged": "^16.4.0"
+  },
+  "lint-staged": {
+    "chat-frontend/**/*.{js,jsx,ts,tsx}": [
+      "chat-frontend/node_modules/.bin/eslint --fix --max-warnings=0",
+      "chat-frontend/node_modules/.bin/prettier -w"
+    ],
+    "chat-frontend/**/*.{json,css,scss,md,webmanifest}": [
+      "chat-frontend/node_modules/.bin/prettier -w"
+    ],
+    "chat-api/**/*.ts": [
+      "chat-api/node_modules/.bin/eslint --fix",
+      "chat-api/node_modules/.bin/prettier --write"
+    ]
   }
 }
