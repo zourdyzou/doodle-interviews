@@ -3,19 +3,11 @@
 import { useAuthor } from '@/hooks/useAuthor';
 import { useMessages } from '@/hooks/useMessages';
 
-import {
-  AuthorPrompt,
-  MessageInput,
-  MessageList,
-} from '@/components/chat';
+import { AuthorPrompt, MessageInput, MessageList } from '@/components/chat';
 
-/**
- * Root page — wires together auth state, message state and the chat UI.
- * Intentionally kept thin; all logic lives in the hooks.
- */
 export default function ChatPage() {
   const { author, setAuthor } = useAuthor();
-  const { messages, isLoading, isSending, error, send } = useMessages();
+  const { messages, isLoading, isSending, error, sentMessageIds, send } = useMessages();
 
   const handleSend = async (message: string) => {
     if (!author) return;
@@ -39,13 +31,11 @@ export default function ChatPage() {
               {error}
             </div>
           )}
-
           <MessageList
             messages={messages}
-            currentAuthor={author}
+            sentMessageIds={sentMessageIds}
             isLoading={isLoading}
           />
-
           <MessageInput
             onSend={handleSend}
             isSending={isSending}

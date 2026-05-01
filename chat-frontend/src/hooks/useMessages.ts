@@ -14,8 +14,16 @@ type State = {
 };
 
 type UseMessagesReturn = State & {
+  sentMessageIds: Set<string>;
   send: (payload: SendMessagePayload) => Promise<void>;
 };
+
+/** Merges incoming messages into the existing list, deduplicating by `_id` */
+function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
+  const seen = new Set(existing.map((m) => m._id));
+  const fresh = incoming.filter((m) => !seen.has(m._id));
+  return [...existing, ...fresh];
+}
 
 /**
  * Manages the full message lifecycle — initial fetch, polling for new
@@ -31,6 +39,10 @@ export function useMessages(): UseMessagesReturn {
     isSending: false,
     error: null,
   });
+
+  // Tracks _ids of messages sent in this session so the UI
+  // can style them as "own" regardless of author name collisions.
+  const sentMessageIds = useRef<Set<string>>(new Set());
 
   // Holds the createdAt of the most recent message — used as the
   // `after` cursor when polling so we only fetch what's new.
@@ -50,7 +62,6 @@ export function useMessages(): UseMessagesReturn {
 
       setState((prev) => ({
         ...prev,
-        // Reverse so oldest renders at top, newest at bottom
         messages: [...messages].reverse(),
         isLoading: false,
         error: null,
@@ -65,7 +76,6 @@ export function useMessages(): UseMessagesReturn {
   }, [updateLatestTimestamp]);
 
   const pollForNew = useCallback(async () => {
-    // Nothing to poll against yet
     if (!latestTimestampRef.current) return;
 
     try {
@@ -79,58 +89,56 @@ export function useMessages(): UseMessagesReturn {
 
       setState((prev) => ({
         ...prev,
-        // New messages come in reverse order too — reverse before appending
-        messages: [...prev.messages, ...newMessages.reverse()],
+        messages: mergeMessages(prev.messages, [...newMessages].reverse()),
         error: null,
       }));
     } catch {
       // Silent — polling failures shouldn't disrupt the UI,
-      // the next tick will retry automatically.
+      // next tick will retry automatically.
     }
   }, [updateLatestTimestamp]);
 
-  /** Posts a message with an optimistic update that rolls back on failure */
-  const send = useCallback(
-    async (payload: SendMessagePayload) => {
-      const optimisticMessage: Message = {
-        _id: `optimistic-${Date.now()}`,
-        message: payload.message,
-        author: payload.author,
-        createdAt: new Date().toISOString(),
-      };
+  const send = useCallback(async (payload: SendMessagePayload) => {
+    const optimisticId = `optimistic-${Date.now()}`;
+    const optimisticMessage: Message = {
+      _id: optimisticId,
+      message: payload.message,
+      author: payload.author,
+      createdAt: new Date().toISOString(),
+    };
 
+    setState((prev) => ({
+      ...prev,
+      isSending: true,
+      error: null,
+      messages: [...prev.messages, optimisticMessage],
+    }));
+
+    try {
+      const saved = await chatApi.sendMessage(payload);
+
+      // Track the real _id as "sent by us this session"
+      sentMessageIds.current.add(saved._id);
+
+      // Swap optimistic placeholder for the real message
       setState((prev) => ({
         ...prev,
-        isSending: true,
-        error: null,
-        messages: [...prev.messages, optimisticMessage],
+        isSending: false,
+        messages: prev.messages.map((m) =>
+          m._id === optimisticId ? saved : m,
+        ),
       }));
 
-      try {
-        const saved = await chatApi.sendMessage(payload);
-
-        // Swap out the optimistic message for the real one
-        setState((prev) => ({
-          ...prev,
-          isSending: false,
-          messages: prev.messages.map((m) =>
-            m._id === optimisticMessage._id ? saved : m,
-          ),
-        }));
-
-        latestTimestampRef.current = saved.createdAt;
-      } catch {
-        // Roll back the optimistic message and surface the error
-        setState((prev) => ({
-          ...prev,
-          isSending: false,
-          messages: prev.messages.filter((m) => m._id !== optimisticMessage._id),
-          error: 'Failed to send message. Please try again.',
-        }));
-      }
-    },
-    [],
-  );
+      latestTimestampRef.current = saved.createdAt;
+    } catch {
+      setState((prev) => ({
+        ...prev,
+        isSending: false,
+        messages: prev.messages.filter((m) => m._id !== optimisticId),
+        error: 'Failed to send message. Please try again.',
+      }));
+    }
+  }, []);
 
   useEffect(() => {
     fetchInitial();
@@ -146,6 +154,8 @@ export function useMessages(): UseMessagesReturn {
     isLoading: state.isLoading,
     isSending: state.isSending,
     error: state.error,
+    // Expose as a plain Set so referential equality doesn't matter
+    sentMessageIds: sentMessageIds.current,
     send,
   };
 }

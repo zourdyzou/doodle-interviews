@@ -6,18 +6,17 @@ import { MessageBubble } from '@/components/chat/MessageBubble';
 
 import type { Message } from '@/types/chat';
 
-
 type Props = {
   messages: Message[];
-  currentAuthor: string;
+  sentMessageIds: Set<string>;
   isLoading: boolean;
 };
 
 /**
  * Scrollable message list — auto-scrolls to the bottom whenever
- * a new message comes in. Loading state renders skeleton bubbles.
+ * a new message arrives. Loading state renders skeleton bubbles.
  */
-export function MessageList({ messages, currentAuthor, isLoading }: Props) {
+export function MessageList({ messages, sentMessageIds, isLoading }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,7 +32,6 @@ export function MessageList({ messages, currentAuthor, isLoading }: Props) {
       >
         {Array.from({ length: 5 }).map((_, i) => (
           <div
-            // Safe to use index here — static skeleton list, never reordered
             key={i}
             className={cn(
               'h-16 w-64 animate-pulse rounded-lg bg-white/60',
@@ -48,9 +46,7 @@ export function MessageList({ messages, currentAuthor, isLoading }: Props) {
   if (messages.length === 0) {
     return (
       <div className='flex flex-1 items-center justify-center'>
-        <p className='text-sm text-gray-400'>
-          No messages yet. Say something!
-        </p>
+        <p className='text-sm text-gray-400'>No messages yet. Say something!</p>
       </div>
     );
   }
@@ -66,10 +62,9 @@ export function MessageList({ messages, currentAuthor, isLoading }: Props) {
         <MessageBubble
           key={message._id}
           message={message}
-          isOwn={message.author === currentAuthor}
+          isOwn={sentMessageIds.has(message._id)}
         />
       ))}
-      {/* Invisible anchor — scrolled into view when new messages arrive */}
       <div ref={bottomRef} aria-hidden='true' />
     </div>
   );
