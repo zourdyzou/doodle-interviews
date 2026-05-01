@@ -1,5 +1,5 @@
 {
-  "name": "doodle-frontend-challenge",
+  "name": "doodle-code-challenge",
   "version": "1.0.0",
   "private": true,
   "description": "Doodle frontend challenge — monorepo containing chat API and frontend",
