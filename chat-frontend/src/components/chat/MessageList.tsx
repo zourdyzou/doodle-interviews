@@ -12,10 +12,6 @@ type Props = {
   isLoading: boolean;
 };
 
-/**
- * Scrollable message list — auto-scrolls to the bottom whenever
- * a new message arrives. Loading state renders skeleton bubbles.
- */
 export function MessageList({ messages, sentMessageIds, isLoading }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -28,13 +24,14 @@ export function MessageList({ messages, sentMessageIds, isLoading }: Props) {
       <div
         aria-label='Loading messages'
         aria-busy='true'
-        className='flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-4'
+        className='flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4'
       >
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
             className={cn(
-              'h-16 w-64 animate-pulse rounded-lg bg-white/60',
+              'h-14 w-48 animate-pulse rounded-2xl',
+              'bg-white/80 shadow-sm',
               i % 2 === 0 ? 'self-start' : 'self-end',
             )}
           />
@@ -56,7 +53,11 @@ export function MessageList({ messages, sentMessageIds, isLoading }: Props) {
       role='log'
       aria-label='Chat messages'
       aria-live='polite'
-      className='flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-4'
+      className={cn(
+        'flex flex-1 flex-col gap-2 overflow-y-auto py-4',
+        // Hide scrollbar across browsers while keeping it functional
+        '[&::-webkit-scrollbar]:w-0',
+      )}
     >
       {messages.map((message) => (
         <MessageBubble

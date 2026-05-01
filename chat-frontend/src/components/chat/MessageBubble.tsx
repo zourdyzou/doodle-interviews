@@ -9,41 +9,41 @@ type Props = {
   isOwn: boolean;
 };
 
-/**
- * Renders a single chat bubble.
- * Own messages sit on the right with a warm yellow background,
- * everyone else's sit on the left on white.
- */
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
 export function MessageBubble({ message, isOwn }: Props) {
   const formattedDate = format(new Date(message.createdAt), 'd MMM yyyy H:mm');
 
   return (
-    <div
-      className={cn(
-        'flex w-full',
-        isOwn ? 'justify-end' : 'justify-start',
-      )}
-    >
+    <div className={cn('flex w-full px-4', isOwn ? 'justify-end' : 'justify-start')}>
       <article
         aria-label={`Message from ${message.author}`}
         className={cn(
-          'flex max-w-[640px] flex-col gap-1 rounded-lg px-4 py-4',
+          'flex flex-col gap-1 rounded-2xl px-4 py-3 w-fit max-w-[min(640px,85%)]',
+          'shadow-[0_1px_4px_rgba(0,0,0,0.08)]',
           isOwn
-            ? 'bg-[#fdf9c4] text-right'
-            : 'bg-white text-left',
+            ? 'bg-[#fdf9c4] items-end'
+            : 'bg-white items-start',
         )}
       >
         {!isOwn && (
-          <span className='text-sm font-normal text-gray-400'>
+          <span className='text-xs font-semibold text-gray-400 tracking-wide'>
             {message.author}
           </span>
         )}
-        <p className='text-base font-bold text-gray-800 break-words'>
-          {message.message}
+        <p className='text-sm text-gray-800 break-words leading-relaxed'>
+          {decodeEntities(message.message)}
         </p>
         <time
           dateTime={message.createdAt}
-          className='text-sm text-gray-400'
+          className='text-xs text-gray-400 mt-0.5'
         >
           {formattedDate}
         </time>

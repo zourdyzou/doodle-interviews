@@ -10,11 +10,6 @@ type Props = {
 
 const MAX_LENGTH = 500;
 
-/**
- * Fixed input bar at the bottom of the chat.
- * Sends on Enter (without Shift), Shift+Enter inserts a newline.
- * Disabled while a message is in-flight to prevent double sends.
- */
 export function MessageInput({ onSend, isSending, disabled }: Props) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -36,7 +31,7 @@ export function MessageInput({ onSend, isSending, disabled }: Props) {
   };
 
   return (
-    <div className='flex items-center gap-2 bg-[#4aaec9] px-2 py-2'>
+    <div className='flex items-center gap-2 bg-[#4aaec9] px-3 py-3 shrink-0'>
       <label htmlFor='message-input' className='sr-only'>
         Type a message
       </label>
@@ -51,12 +46,11 @@ export function MessageInput({ onSend, isSending, disabled }: Props) {
         disabled={isSending || disabled}
         placeholder='Message'
         aria-label='Message input'
-        aria-disabled={isSending || disabled}
         className={cn(
-          'flex-1 resize-none rounded-md border-0 bg-white px-4 py-3',
-          'text-base text-gray-800 placeholder:text-gray-400',
-          'focus:outline-none focus:ring-2 focus:ring-white/50',
-          'disabled:opacity-50',
+          'flex-1 resize-none rounded-lg border-0 bg-white px-4 py-3',
+          'text-sm text-gray-800 placeholder:text-gray-400',
+          'focus:outline-none focus:ring-2 focus:ring-white/40',
+          'disabled:opacity-50 leading-relaxed',
         )}
       />
       <button
@@ -65,8 +59,8 @@ export function MessageInput({ onSend, isSending, disabled }: Props) {
         disabled={!canSend}
         aria-label='Send message'
         className={cn(
-          'rounded-md bg-[#e8644a] px-6 py-3',
-          'text-base font-semibold text-white',
+          'rounded-lg bg-[#e8644a] px-5 py-3 shrink-0',
+          'text-sm font-semibold text-white tracking-wide',
           'transition-opacity duration-150',
           'hover:opacity-90 active:opacity-75',
           'disabled:cursor-not-allowed disabled:opacity-40',
