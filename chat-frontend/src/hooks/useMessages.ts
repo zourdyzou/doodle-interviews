@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { chatApi } from '@/lib/api/chat.api';
+
 import type { Message, SendMessagePayload } from '@/types/chat';
 
 const POLL_INTERVAL_MS = 5_000;
@@ -17,11 +18,10 @@ type UseMessagesReturn = State & {
   send: (payload: SendMessagePayload) => Promise<void>;
 };
 
-/** Merges incoming messages, deduplicating by `_id` */
-function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
-  const seen = new Set(existing.map((m) => m._id));
-  const fresh = incoming.filter((m) => !seen.has(m._id));
-  return [...existing, ...fresh];
+function sortByDate(messages: Message[]): Message[] {
+  return [...messages].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
 }
 
 export function useMessages(): UseMessagesReturn {
@@ -33,24 +33,37 @@ export function useMessages(): UseMessagesReturn {
   });
 
   const sentMessageIds = useRef<Set<string>>(new Set());
-  const latestTimestampRef = useRef<string | null>(null);
-  // Guard — polling must not start until initial fetch completes
+  const optimisticMessages = useRef<Map<string, Message>>(new Map());
   const isReadyRef = useRef(false);
+  const isPollingRef = useRef(false);
+  const hasFetchedRef = useRef(false);
 
-  const updateLatestTimestamp = useCallback((messages: Message[]) => {
-    if (messages.length === 0) return;
-    // API returns reverse chronological — index 0 is the newest
-    latestTimestampRef.current = messages[0].createdAt;
+  /**
+   * Merges server messages with any in-flight optimistic ones.
+   * Server is always the source of truth — optimistic messages
+   * are only shown until the server confirms them.
+   */
+  const mergeWithOptimistic = useCallback((serverMessages: Message[]): Message[] => {
+    const serverIds = new Set(serverMessages.map((m) => m._id));
+
+    // Keep only optimistic messages not yet confirmed by server
+const pendingOptimistic = Array.from(optimisticMessages.current.values()).filter(
+  (m) => !serverIds.has(m._id),
+);
+
+    return sortByDate([...serverMessages, ...pendingOptimistic]);
   }, []);
 
   const fetchInitial = useCallback(async () => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
     try {
       const messages = await chatApi.getMessages({ limit: 50 });
-      updateLatestTimestamp(messages);
 
       setState((prev) => ({
         ...prev,
-        messages: [...messages].reverse(),
+        messages: mergeWithOptimistic(messages),
         isLoading: false,
         error: null,
       }));
@@ -63,30 +76,30 @@ export function useMessages(): UseMessagesReturn {
     } finally {
       isReadyRef.current = true;
     }
-  }, [updateLatestTimestamp]);
+  }, [mergeWithOptimistic]);
 
   const pollForNew = useCallback(async () => {
-    // Don't poll until initial fetch is done and we have a cursor
-    if (!isReadyRef.current || !latestTimestampRef.current) return;
+    if (!isReadyRef.current) return;
+    if (isPollingRef.current) return;
+
+    isPollingRef.current = true;
 
     try {
-      const newMessages = await chatApi.getMessages({
-        after: latestTimestampRef.current,
-      });
+      const messages = await chatApi.getMessages({ limit: 50 });
 
-      if (newMessages.length === 0) return;
-
-      updateLatestTimestamp(newMessages);
-
+      // Replace the list entirely — server is source of truth.
+      // Optimistic messages are layered on top until confirmed.
       setState((prev) => ({
         ...prev,
-        messages: mergeMessages(prev.messages, [...newMessages].reverse()),
+        messages: mergeWithOptimistic(messages),
         error: null,
       }));
     } catch {
-      // Silent — next tick will retry
+      // Silent — next tick retries
+    } finally {
+      isPollingRef.current = false;
     }
-  }, [updateLatestTimestamp]);
+  }, [mergeWithOptimistic]);
 
   const send = useCallback(async (payload: SendMessagePayload) => {
     const optimisticId = `optimistic-${Date.now()}`;
@@ -97,28 +110,36 @@ export function useMessages(): UseMessagesReturn {
       createdAt: new Date().toISOString(),
     };
 
+    // Track in-flight optimistic message
+    optimisticMessages.current.set(optimisticId, optimisticMessage);
+
     setState((prev) => ({
       ...prev,
       isSending: true,
       error: null,
-      messages: [...prev.messages, optimisticMessage],
+      messages: sortByDate([...prev.messages, optimisticMessage]),
     }));
 
     try {
       const saved = await chatApi.sendMessage(payload);
+
       sentMessageIds.current.add(saved._id);
 
-      // Update timestamp so next poll doesn't re-fetch this message
-      latestTimestampRef.current = saved.createdAt;
+      // Remove optimistic — next poll or state update will show the real one
+      optimisticMessages.current.delete(optimisticId);
 
       setState((prev) => ({
         ...prev,
         isSending: false,
-        messages: prev.messages.map((m) =>
-          m._id === optimisticId ? saved : m,
+        messages: sortByDate(
+          prev.messages
+            .filter((m) => m._id !== optimisticId)
+            .concat(saved),
         ),
       }));
     } catch {
+      optimisticMessages.current.delete(optimisticId);
+
       setState((prev) => ({
         ...prev,
         isSending: false,
