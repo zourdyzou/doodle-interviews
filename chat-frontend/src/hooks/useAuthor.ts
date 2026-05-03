@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const AUTHOR_KEY = 'chat_author';
 
@@ -10,16 +10,15 @@ type UseAuthorReturn = {
 
 /**
  * Persists the current user's display name in localStorage.
- * `author` is null until the user sets a name — the UI should
- * gate the chat input behind a name prompt in that case.
+ * Reads synchronously on init to avoid a flash of the name prompt
+ * on page reload when a name is already stored.
  */
 export function useAuthor(): UseAuthorReturn {
-  const [author, setAuthorState] = useState<string | null>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(AUTHOR_KEY);
-    if (stored) setAuthorState(stored);
-  }, []);
+  const [author, setAuthorState] = useState<string | null>(() => {
+    // useState initializer runs once on mount — safe to read localStorage here
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(AUTHOR_KEY);
+  });
 
   const setAuthor = (name: string) => {
     localStorage.setItem(AUTHOR_KEY, name);

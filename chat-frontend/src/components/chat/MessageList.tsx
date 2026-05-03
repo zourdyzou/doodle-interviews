@@ -8,11 +8,11 @@ import type { Message } from '@/types/chat';
 
 type Props = {
   messages: Message[];
-  sentMessageIds: Set<string>;
+  currentAuthor: string;
   isLoading: boolean;
 };
 
-export function MessageList({ messages, sentMessageIds, isLoading }: Props) {
+export function MessageList({ messages, currentAuthor, isLoading }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,7 +55,6 @@ export function MessageList({ messages, sentMessageIds, isLoading }: Props) {
       aria-live='polite'
       className={cn(
         'flex flex-1 flex-col gap-2 overflow-y-auto py-4',
-        // Hide scrollbar across browsers while keeping it functional
         '[&::-webkit-scrollbar]:w-0',
       )}
     >
@@ -63,7 +62,7 @@ export function MessageList({ messages, sentMessageIds, isLoading }: Props) {
         <MessageBubble
           key={message._id}
           message={message}
-          isOwn={sentMessageIds.has(message._id)}
+          isOwn={message.author === currentAuthor}
         />
       ))}
       <div ref={bottomRef} aria-hidden='true' />

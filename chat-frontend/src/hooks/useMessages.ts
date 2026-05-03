@@ -14,7 +14,6 @@ type State = {
 };
 
 type UseMessagesReturn = State & {
-  sentMessageIds: Set<string>;
   send: (payload: SendMessagePayload) => Promise<void>;
 };
 
@@ -32,7 +31,6 @@ export function useMessages(): UseMessagesReturn {
     error: null,
   });
 
-  const sentMessageIds = useRef<Set<string>>(new Set());
   const optimisticMessages = useRef<Map<string, Message>>(new Map());
   const isReadyRef = useRef(false);
   const isPollingRef = useRef(false);
@@ -123,8 +121,6 @@ const pendingOptimistic = Array.from(optimisticMessages.current.values()).filter
     try {
       const saved = await chatApi.sendMessage(payload);
 
-      sentMessageIds.current.add(saved._id);
-
       // Remove optimistic — next poll or state update will show the real one
       optimisticMessages.current.delete(optimisticId);
 
@@ -163,7 +159,6 @@ const pendingOptimistic = Array.from(optimisticMessages.current.values()).filter
     isLoading: state.isLoading,
     isSending: state.isSending,
     error: state.error,
-    sentMessageIds: sentMessageIds.current,
     send,
   };
 }

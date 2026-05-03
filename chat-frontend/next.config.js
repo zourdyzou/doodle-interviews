@@ -22,6 +22,11 @@ const nextConfig = {
       rule.test?.test?.('.svg')
     );
 
+    config.watchOptions = {
+      poll: 800,
+      aggregateTimeout: 300,
+    };
+
     config.module.rules.push(
       // Reapply the existing rule, but only for svg imports ending in ?url
       {

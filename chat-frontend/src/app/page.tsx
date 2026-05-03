@@ -7,7 +7,7 @@ import { AuthorPrompt, MessageInput, MessageList } from '@/components/chat';
 
 export default function ChatPage() {
   const { author, setAuthor } = useAuthor();
-  const { messages, isLoading, isSending, error, sentMessageIds, send } = useMessages();
+  const { messages, isLoading, isSending, error, send } = useMessages();
 
   const handleSend = async (message: string) => {
     if (!author) return;
@@ -33,7 +33,7 @@ export default function ChatPage() {
           )}
           <MessageList
             messages={messages}
-            sentMessageIds={sentMessageIds}
+            currentAuthor={author}
             isLoading={isLoading}
           />
           <MessageInput
