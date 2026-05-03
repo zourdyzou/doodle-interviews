@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import { useAuthor } from '@/hooks/useAuthor';
 import { useMessages } from '@/hooks/useMessages';
 
@@ -7,12 +9,21 @@ import { AuthorPrompt, MessageInput, MessageList } from '@/components/chat';
 
 export default function ChatPage() {
   const { author, setAuthor } = useAuthor();
-  const { messages, isLoading, isSending, error, sentMessageIds, send } = useMessages();
+  const { messages, isLoading, isSending, error, send } = useMessages();
+  // Prevents SSR/client mismatch — we don't know about localStorage on the server
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSend = async (message: string) => {
     if (!author) return;
     await send({ message, author });
   };
+
+  // Render nothing meaningful until we're on the client and know the auth state
+  if (!mounted) return null;
 
   return (
     <main
@@ -33,7 +44,7 @@ export default function ChatPage() {
           )}
           <MessageList
             messages={messages}
-            sentMessageIds={sentMessageIds}
+            currentAuthor={author}
             isLoading={isLoading}
           />
           <MessageInput
