@@ -1,4 +1,4 @@
-import { KeyboardEvent, useState } from 'react';
+import { KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -9,13 +9,16 @@ type Props = {
 const AUTHOR_PATTERN = /^[a-zA-Z0-9\s\-_]+$/;
 const MAX_LENGTH = 50;
 
-/**
- * Shown on first visit when we don't have a name stored yet.
- * Validates against the same pattern the API enforces on `author`.
- */
 export function AuthorPrompt({ onConfirm }: Props) {
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus the input after mount instead of using autoFocus
+  // to avoid SSR hydration mismatches
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const validate = (name: string): string | null => {
     if (name.trim().length === 0) return 'Name cannot be empty';
@@ -55,6 +58,8 @@ export function AuthorPrompt({ onConfirm }: Props) {
           Your display name
         </label>
         <input
+          suppressHydrationWarning
+          ref={inputRef}
           id='author-input'
           type='text'
           value={value}
@@ -65,7 +70,6 @@ export function AuthorPrompt({ onConfirm }: Props) {
           onKeyDown={handleKeyDown}
           maxLength={MAX_LENGTH}
           placeholder='Your name'
-          autoFocus
           aria-describedby={error ? 'author-error' : undefined}
           className={cn(
             'w-full rounded-md border bg-white px-4 py-3',
@@ -80,6 +84,7 @@ export function AuthorPrompt({ onConfirm }: Props) {
           </p>
         )}
         <button
+          suppressHydrationWarning
           type='button'
           onClick={handleConfirm}
           className={cn(
